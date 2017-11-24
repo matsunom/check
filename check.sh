@@ -177,6 +177,29 @@ check_restore() {
     echo "reading CHECK_TIME.dump to CHECK_TIME"
 }
 
+total_eachproject() {
+  check_project $1 $2
+  check_project_return=$?
+  if [ $check_project_return = 0 ] ; then 
+    check_status $1 $2
+    check_status_return=$?
+    if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしている。
+      if [ $NAME_STATUS = $2 ] ; then
+        echo "$2 is running. Please check-out."
+        exit
+      fi
+    fi
+    total_time=`sqlite3 CHECK_TIME "SELECT sum(STRFTIME('%s', END) - STRFTIME('%s', START)) FROM '$2'"`
+    hours=`expr $total_time / 3600`
+    minute=`expr \( $total_time % 3600 \) / 60`
+    second=`expr $total_time % 60`
+    echo "$2 total activity time is $hours:$minute:$second."
+  else
+    echo "$2 is not exist."
+    exit
+  fi
+}
+
 check_man() {
   echo ""
   echo "  check is a easy time logger tool."
@@ -228,7 +251,10 @@ main() {
     check_dump
 
   elif [ $1 = "restore" ] ; then
-    check_dump
+    check_restore
+
+  elif [ $1 = "total" ] ; then
+    total_eachproject $1 $2
 
   elif [ $1 = "man" ] ; then
     check_man
