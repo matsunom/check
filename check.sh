@@ -183,7 +183,7 @@ total_eachproject() {
   if [ $check_project_return = 0 ] ; then 
     check_status $1 $2
     check_status_return=$?
-    if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしている。
+    if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしているのでチェックアウトするように指示を出す。
       if [ $NAME_STATUS = $2 ] ; then
         echo "$2 is running. Please check-out."
         exit
@@ -200,6 +200,26 @@ total_eachproject() {
   fi
 }
 
+view_eachproject() {
+  check_project $1 $2
+  check_project_return=$?
+  if [ $check_project_return = 0 ] ; then 
+    check_status $1 $2
+    check_status_return=$?
+    if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしているのでチェックアウトするように指示を出す。
+      if [ $NAME_STATUS = $2 ] ; then
+        echo "$2 is running. Please check-out."
+        exit
+      fi
+    fi
+    sqlite3 CHECK_TIME "SELECT DATE(START) AS date, TIME(SUM(STRFTIME('%s', END) - STRFTIME('%s', START)), 'unixepoch') AS time FROM '$2'"
+  else
+    echo "$2 is not exist."
+    exit
+  fi
+}
+
+
 check_man() {
   echo ""
   echo "  check is a easy time logger tool."
@@ -208,6 +228,8 @@ check_man() {
   echo "      check in [project] : You can start logging time."
   echo "      check out : You can stop time logging."
   echo "      check list : You can see a list of all projects."
+  echo "      check total [project] : You can see the total time of a project."
+  echo "      check view [project] : You can see the total time of the day of a project."
   echo "      check drop [project] : You can drop a project."
   echo "      check delete [project] : You can delete a latest record from a project."
   echo "      check dump : You can make a dumpfile."
@@ -241,6 +263,12 @@ main() {
   elif [ $1 = "list" ] ; then
     check_list
 
+  elif [ $1 = "total" ] ; then
+    total_eachproject $1 $2
+
+  elif [ $1 = "view" ] ; then
+    view_eachproject $1 $2
+
   elif [ $1 = "drop" ] ; then
     check_drop $1 $2
 
@@ -252,9 +280,6 @@ main() {
 
   elif [ $1 = "restore" ] ; then
     check_restore
-
-  elif [ $1 = "total" ] ; then
-    total_eachproject $1 $2
 
   elif [ $1 = "man" ] ; then
     check_man
