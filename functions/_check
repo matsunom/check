@@ -1,0 +1,49 @@
+#!/bin/sh
+
+
+#compdef check
+#autoload
+
+
+
+
+function _check () {
+	local dirpath=$HOME"/check"
+	local filepath=$HOME"/check/CHECK_TIME"
+	local context curcontext=$curcontext state line
+	declare -A opt_args
+	local ret=1
+
+	cd $dirpath
+	local sql_return=`sqlite3 CHECK_TIME "SELECT NAME FROM projects"`
+	local VAR=`echo ${sql_return} | sed -e "s/[\r\n]\+//g"`
+	local projects=(`echo $sql_return`)
+
+	cd - > /dev/null
+
+	if (( CURRENT == 2 ));then
+    	local -a cmds
+    	cmds=(
+        'in:check in [project] : You can start logging time.'
+        'out:You can stop time logging.'
+        'list:check list : You can see a list of all projects.'
+      	'total:check total [project] : You can see the total time of a project.'
+      	'view:check view [project] : You can see the total time of the day of the project.'
+      	'drop:check drop [project] : You can drop a project.'
+      	'delete:check delete [project] : You can delete the latest record from a project.'
+      	'dump:check dump : You can make a dumpfile.'
+      	'restore:check restore : You can restore from a dumpfile.'
+      	'man:check man : You can see this command mannual.'
+    	)
+
+    	_describe -t commands "Commands" cmds
+	fi
+
+	if (( CURRENT == 3 ));then
+		_describe -t commands "tables" projects && ret=0
+	fi
+
+return ret
+}
+
+_check "$@"
