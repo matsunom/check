@@ -1,6 +1,0 @@
-#補完機能の有効化
-autoload -U compinit
-compinit
-
-#~/binをPATHに読み込む
-export PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/Users/matsunom/bin:$HOME/bin

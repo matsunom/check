@@ -26,14 +26,16 @@ function _check () {
     	cmds=(
         'in:check in [project] : You can start logging time.'
         'out:You can stop time logging.'
-        'list:check list : You can see a list of all projects.'
-      	'total:check total [project] : You can see the total time of a project.'
-      	'view:check view [project] : You can see the total time of the day of the project.'
+        'list:check list : You can see lists of all projects.'
+        'now:check now : You can see which project is running.'
+      	'total:check total [project] : You can see total time of a project.'
+      	'view:check view [project] : You can see total time of each day of a project.'
+      	'alter:check alter [project] HH:MM:SS : You can alter the latest record END_TIME of a project.'
       	'drop:check drop [project] : You can drop a project.'
       	'delete:check delete [project] : You can delete the latest record from a project.'
       	'dump:check dump : You can make a dumpfile.'
       	'restore:check restore : You can restore from a dumpfile.'
-      	'man:check man : You can see this command mannual.'
+      	'man:check man : You can see a mannual.'
     	)
 
     	_describe -t commands "Commands" cmds
