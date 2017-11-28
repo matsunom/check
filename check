@@ -10,6 +10,7 @@ check_nonactive() {
     echo "check requires function name!"
     exit
   fi
+  return 0
 }
 
 check_database() {
@@ -25,6 +26,7 @@ check_database() {
   fi
 
   cd - > /dev/null
+  return 0
 }
 
 
@@ -58,6 +60,7 @@ check_project() {
 create_project() {
   sqlite3 CHECK_TIME "INSERT INTO projects ('NAME') VALUES ('$2')"
   sqlite3 CHECK_TIME "CREATE TABLE $2 ('ID' INTEGER PRIMARY KEY AUTOINCREMENT, 'START' DATETIME, 'END' DATETIME, 'MEMO' TEXT)"
+  return 0
 }
 
 
@@ -129,6 +132,64 @@ check_out() {
 
 check_list() {
   sqlite3 CHECK_TIME "SELECT NAME FROM projects"
+  return 0
+}
+
+check_now() {
+  check_status
+  check_status_return=$?
+  if [ $check_status_return = 0 ] ; then
+    echo "NOW no project is runnig!"
+  elif [ $check_status_return = 1 ] ; then
+    echo "Now $NAME_STATUS is running!"
+  fi
+  return 0
+}
+
+check_alter() {
+  check_project $1 $2
+  check_project_return=$?
+  if [ $check_project_return = 0 ] ; then #check_project_return=0だった場合、プロジェクトはは存在するのでプロジェクトの変更を行う。
+    check_status
+    check_status_return=$?
+    if [ $check_status_return = 1 ] ; then
+      echo "check_status_return : $check_status_return"
+      if [ $NAME_STATUS = $2 ] ; then
+        #チェックアウトする
+        DATE=`date "+%Y-%m-%d %H:%M:%S"`
+        query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
+        sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$DATE' WHERE ID = '$query_id'"
+        sqlite3 CHECK_TIME "UPDATE projects SET START = 0 WHERE NAME = '$NAME_STATUS'"
+      fi
+    fi
+    # ENDの値が更新されているのでもう1回取得する
+    START_PROJECT=`sqlite3 CHECK_TIME "SELECT START from '$2'  WHERE ID = (SELECT max(ID) FROM '$2')"`
+    END_PROJECT=`sqlite3 CHECK_TIME "SELECT END from '$2'  WHERE ID = (SELECT max(ID) FROM '$2')"`
+    #レコードの確認を行う
+    echo "The latest record : "
+    sqlite3 CHECK_TIME "SELECT START, END, MEMO from '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
+    #$3をsqlに渡してENDの候補を表示させる
+    addtime="+$3"
+    CONDIDATE=`sqlite3 CHECK_TIME "SELECT DATETIME(START, '$addtime') AS time FROM '$2' WHERE ID = (SELECT max(ID) FROM '$2')"`
+    echo "END_TIME will alter :"
+    echo "$END_PROJECT -> $CONDIDATE"
+    echo "Do you alter this record?(y/n)."
+    read alter_repry
+    if [ $alter_repry = 'y' ] ; then
+    sqlite3 CHECK_TIME "UPDATE '$2' SET END = '$CONDIDATE' WHERE ID = (SELECT max(ID) FROM '$2')"
+    echo "altering $2 is successful."
+    sqlite3 CHECK_TIME "SELECT START, END, MEMO from '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
+
+    else
+       echo "altering is failed."
+      exit
+    fi
+
+  else
+    echo "$2 is not exist."
+    exit
+  fi
+  return 0
 }
 
 check_drop() {
@@ -142,6 +203,7 @@ check_drop() {
     echo "$2 is not exist."
     exit
   fi
+  return 0
 }
 
 check_delete() {
@@ -150,7 +212,7 @@ check_delete() {
   if [ $check_project_return = 0 ] ; then #check_project_return=0だった場合、プロジェクトはは存在するのでプロジェクトの削除を行う。
     sqlite3 CHECK_TIME "SELECT * from '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
 
-    echo "Do you delete this recort?(y/n)."
+    echo "Do you delete this record?(y/n)."
     read delete_repry
     if [ $delete_repry = 'y' ] ; then
       sqlite3 CHECK_TIME "DELETE FROM '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
@@ -165,16 +227,19 @@ check_delete() {
     echo "$2 is not exist."
     exit
   fi
+  return 0
 }
 
 check_dump() {
   echo ".dump" | sqlite3 CHECK_TIME > CHECK_TIME.dump
   echo "creating dump file!"
+  return 0
 }
 
 check_restore() {
     sqlite3 CHECK_TIME < CHECK_TIME.dump
     echo "reading CHECK_TIME.dump to CHECK_TIME"
+    return 0
 }
 
 total_eachproject() {
@@ -198,6 +263,7 @@ total_eachproject() {
     echo "$2 is not exist."
     exit
   fi
+  return 0
 }
 
 view_eachproject() {
@@ -217,6 +283,7 @@ view_eachproject() {
     echo "$2 is not exist."
     exit
   fi
+  return 0
 }
 
 
@@ -227,15 +294,18 @@ check_man() {
   echo "    check has some functions."
   echo "      check in [project] : You can start logging time."
   echo "      check out : You can stop time logging."
-  echo "      check list : You can see a list of all projects."
-  echo "      check total [project] : You can see the total time of a project."
-  echo "      check view [project] : You can see the total time of the day of a project."
+  echo "      check list : You can see lists of all projects."
+  echo "      check now : You can see which project is running."
+  echo "      check total [project] : You can see total time of a project."
+  echo "      check view [project] : You can see total time of each day of a project."
+  echo "      check alter [project] HH:MM:SS : You can alter the latest record END_TIME of a project."
   echo "      check drop [project] : You can drop a project."
   echo "      check delete [project] : You can delete a latest record from a project."
   echo "      check dump : You can make a dumpfile."
   echo "      check restore : You can restore from a dumpfile."
   echo "      check man : You can see this command mannual."
   echo ""
+  return 0
 }
 
 #スクリプトの流れ
@@ -263,11 +333,17 @@ main() {
   elif [ $1 = "list" ] ; then
     check_list
 
+  elif [ $1 = "now" ] ; then
+    check_now
+
   elif [ $1 = "total" ] ; then
     total_eachproject $1 $2
 
   elif [ $1 = "view" ] ; then
     view_eachproject $1 $2
+
+  elif [ $1 = "alter" ] ; then
+    check_alter $1 $2 $3
 
   elif [ $1 = "drop" ] ; then
     check_drop $1 $2
@@ -289,4 +365,4 @@ main() {
   cd - > /dev/null
 }
 
-main $1 $2
+main $1 $2 $3
