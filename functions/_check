@@ -16,7 +16,7 @@ function _check () {
 
 	cd $dirpath
 	local sql_return=`sqlite3 CHECK_TIME "SELECT NAME FROM projects"`
-	local VAR=`echo ${sql_return} | sed -e "s/[\r\n]\+//g"`
+	local sql_return=`echo ${sql_return} | sed -e "s/[\r\n]\+//g"`
 	local projects=(`echo $sql_return`)
 
 	cd - > /dev/null
@@ -30,6 +30,7 @@ function _check () {
         'now:check now : You can see which project is running.'
       	'total:check total [project] : You can see total time of a project.'
       	'view:check view [project] : You can see total time of each day of a project.'
+        'show:check show : You can see activities.'
       	'alter:check alter [project] HH:MM:SS : You can alter the latest record END_TIME of a project.'
       	'drop:check drop [project] : You can drop a project.'
       	'delete:check delete [project] : You can delete the latest record from a project.'

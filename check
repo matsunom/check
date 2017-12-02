@@ -286,6 +286,27 @@ check_view() {
   return 0
 }
 
+check_show() {
+  local VAR=`check_list  | sed -e "s/[\r\n]\+//g"`
+  local projects=(`echo $VAR`)
+  # echo ${projects[*]}
+  # local num_projects=${#projects[*]}
+  # echo $num_projects
+  local sql=""
+  local num=0
+  for project in ${projects[@]}; do
+    if [ $num = 0 ] ; then
+      sql=${sql}"SELECT '$project', START, END, MEMO FROM '$project'"
+    else
+    sql="${sql} UNION SELECT '$project', START, END, MEMO FROM '$project'"
+    fi
+    num=$num+1
+  done
+  sql=${sql}" ORDER BY START ASC;"
+  # echo $sql
+  sqlite3 CHECK_TIME "${sql}"
+  return 0
+}
 
 check_man() {
   echo ""
@@ -341,6 +362,9 @@ main() {
 
   elif [ $1 = "view" ] ; then
     check_view $1 $2
+
+  elif [ $1 = "show" ] ; then
+    check_show $1 $2
 
   elif [ $1 = "alter" ] ; then
     check_alter $1 $2 $3
