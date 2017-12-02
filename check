@@ -242,7 +242,7 @@ check_restore() {
     return 0
 }
 
-total_eachproject() {
+check_total() {
   check_project $1 $2
   check_project_return=$?
   if [ $check_project_return = 0 ] ; then 
@@ -266,7 +266,7 @@ total_eachproject() {
   return 0
 }
 
-view_eachproject() {
+check_view() {
   check_project $1 $2
   check_project_return=$?
   if [ $check_project_return = 0 ] ; then 
@@ -278,7 +278,7 @@ view_eachproject() {
         exit
       fi
     fi
-    sqlite3 CHECK_TIME "SELECT DATE(START) AS date, TIME(SUM(STRFTIME('%s', END) - STRFTIME('%s', START)), 'unixepoch') AS time FROM '$2'"
+    sqlite3 CHECK_TIME "select DATE(START) AS date, TIME(SUM(STRFTIME('%s', END) - STRFTIME('%s', START)), 'unixepoch') AS time FROM '$2' GROUP BY date"
   else
     echo "$2 is not exist."
     exit
@@ -337,10 +337,10 @@ main() {
     check_now
 
   elif [ $1 = "total" ] ; then
-    total_eachproject $1 $2
+    check_total $1 $2
 
   elif [ $1 = "view" ] ; then
-    view_eachproject $1 $2
+    check_view $1 $2
 
   elif [ $1 = "alter" ] ; then
     check_alter $1 $2 $3
