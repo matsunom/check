@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use utf8;
 use Data::Printer;
-use Switch;
 use Check::CLI::Man;
 
 use Mouse;
