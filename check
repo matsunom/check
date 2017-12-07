@@ -38,7 +38,7 @@ check_status() {
       NAME_STATUS=`sqlite3 CHECK_TIME "SELECT NAME FROM projects WHERE ID == $ID_STATUS"`
       START_STATUS=`sqlite3 CHECK_TIME "SELECT START FROM projects WHERE ID == $ID_STATUS"`
       return 1
-    elif [ $STATUS = 0 ] ; then 
+    elif [ $STATUS = 0 ] ; then
       return 0
     else
       sqlite3 CHECK_TIME "SELECT NAME FROM projects WHERE START = 1"
@@ -90,7 +90,7 @@ check_in() {
     sqlite3 CHECK_TIME "INSERT INTO $2 ('START', 'MEMO') VALUES ('$DATE', '$memo')"
 
     echo "Your check-in $2 is successful."
-  
+
   elif [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、最後はINなのでINできない
     echo "$NAME_STATUS is running. Please check out!"
     exit
@@ -245,7 +245,7 @@ check_restore() {
 check_total() {
   check_project $1 $2
   check_project_return=$?
-  if [ $check_project_return = 0 ] ; then 
+  if [ $check_project_return = 0 ] ; then
     check_status $1 $2
     check_status_return=$?
     if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしているのでチェックアウトするように指示を出す。
@@ -269,7 +269,7 @@ check_total() {
 check_view() {
   check_project $1 $2
   check_project_return=$?
-  if [ $check_project_return = 0 ] ; then 
+  if [ $check_project_return = 0 ] ; then
     check_status $1 $2
     check_status_return=$?
     if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしているのでチェックアウトするように指示を出す。
