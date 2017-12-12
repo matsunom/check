@@ -1,0 +1,7 @@
+#!/usr/bin/env perl
+use File::Spec;
+use Cwd 'getcwd';
+unshift @INC, File::Spec->catfile(getcwd, "lib");
+require Check::CLI;
+
+exit Check::CLI->new->commands(@ARGV);
