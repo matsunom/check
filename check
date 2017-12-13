@@ -288,24 +288,32 @@ check_view() {
 }
 
 check_show() {
-  local VAR=`check_list  | sed -e "s/[\r\n]\+//g"`
-  local projects=(`echo $VAR`)
-  # echo ${projects[*]}
-  # local num_projects=${#projects[*]}
-  # echo $num_projects
-  local sql=""
-  local num=0
-  for project in ${projects[@]}; do
-    if [ $num = 0 ] ; then
-      sql=${sql}"SELECT '$project', START, END, MEMO FROM '$project'"
-    else
-    sql="${sql} UNION SELECT '$project', START, END, MEMO FROM '$project'"
+  if [ -z "$2" ] ; then #$2の指定がない場合は全てのプロジェクトを表示する
+    local VAR=`check_list  | sed -e "s/[\r\n]\+//g"`
+    local projects=(`echo $VAR`)
+    local sql=""
+    local num=0
+    for project in ${projects[@]}; do
+      if [ $num = 0 ] ; then
+        sql=${sql}"SELECT '$project', START, END, MEMO FROM '$project'"
+      else
+      sql="${sql} UNION SELECT '$project', START, END, MEMO FROM '$project'"
+      fi
+      num=$num+1
+    done
+    sql=${sql}" ORDER BY START ASC;"
+    # echo $sql
+    sqlite3 CHECK_TIME "${sql}"
+  else #$2にプロジェクト名を指定するとそのプロジェクトだけどSELECTする
+      check_project $1 $2
+      local check_project_return=$?
+      if [ $check_project_return = 0 ] ; then #check_project_return=0だった場合、プロジェクトはは存在する。
+        sqlite3 CHECK_TIME "SELECT START, END, MEMO FROM '$2'"
+      else
+        echo "$2 is not exist."
+        exit
     fi
-    num=$num+1
-  done
-  sql=${sql}" ORDER BY START ASC;"
-  # echo $sql
-  sqlite3 CHECK_TIME "${sql}"
+  fi
   return 0
 }
 
