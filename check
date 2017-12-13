@@ -2,8 +2,8 @@
 
 #ディレクトリとデータベースの作成を行う
 
-dirpath=$HOME"/check"
-filepath=$HOME"/check/CHECK_TIME"
+DIRPATH=$HOME"/check"
+FILEPATH=$HOME"/check/CHECK_TIME"
 
 check_nonactive() {
   if [ "$1" = "" ] ; then #$1が空文字列だと終了する
@@ -14,14 +14,14 @@ check_nonactive() {
 }
 
 check_database() {
-  if [ ! -e $dirpath ] ; then
-    mkdir $dirpath
+  if [ ! -e $DIRPATH ] ; then
+    mkdir $DIRPATH
   fi
 
-  cd $dirpath
+  cd $DIRPATH
 
-  if [ ! -e $filepath ] ; then
-    touch $filepath
+  if [ ! -e $FILEPATH ] ; then
+    touch $FILEPATH
     sqlite3 CHECK_TIME "CREATE TABLE projects ('ID' INTEGER PRIMARY KEY AUTOINCREMENT, 'NAME' TEXT, 'START' INTEGER, 'END' INTEGER)"
   fi
 
@@ -32,13 +32,13 @@ check_database() {
 
 #プログラムのステータスを確認する
 check_status() {
-    STATUS=`sqlite3 CHECK_TIME "SELECT COUNT(*) FROM projects WHERE START = 1"`
-    if [ $STATUS = 1 ] ; then
+    local projects_status=`sqlite3 CHECK_TIME "SELECT COUNT(*) FROM projects WHERE START = 1"`
+    if [ $projects_status = 1 ] ; then
       ID_STATUS=`sqlite3 CHECK_TIME "SELECT ID FROM projects WHERE START = 1"`
       NAME_STATUS=`sqlite3 CHECK_TIME "SELECT NAME FROM projects WHERE ID == $ID_STATUS"`
       START_STATUS=`sqlite3 CHECK_TIME "SELECT START FROM projects WHERE ID == $ID_STATUS"`
       return 1
-    elif [ $STATUS = 0 ] ; then 
+    elif [ $projects_status = 0 ] ; then 
       return 0
     else
       sqlite3 CHECK_TIME "SELECT NAME FROM projects WHERE START = 1"
@@ -48,10 +48,10 @@ check_status() {
 
 #プロジェクトの存在を確認する
 check_project() {
-  TABLE_STATUS=`sqlite3 CHECK_TIME "SELECT COUNT(*) FROM projects WHERE NAME = '$2'"`
-  if [ $TABLE_STATUS = 1 ] ; then
+  local table_status=`sqlite3 CHECK_TIME "SELECT COUNT(*) FROM projects WHERE NAME = '$2'"`
+  if [ $table_status = 1 ] ; then
     return 0
-  elif [ $TABLE_STATUS = 0 ] ; then
+  elif [ $table_status = 0 ] ; then
     return 1
   fi
 }
@@ -67,7 +67,7 @@ create_project() {
 #チェックインする
 check_in() {
   check_status
-  check_status_return=$?
+  local check_status_return=$?
   if [ $check_status_return = 0 ] ; then #実行状態check_status_return=0だった場合、最後にOUTされているので、INできる
     if [ -z "$2" ] ; then #projectが空文字列だと終了する
     echo "Please write a project name!"
@@ -76,18 +76,18 @@ check_in() {
 
     #テーブルの存在の確認
     check_project $1 $2
-    check_project_return=$?
+    local check_project_return=$?
     if [ $check_project_return = 1 ] ; then #check_project_return=1だった場合、テーブルは存在しないので、projectsへの追加とprojectの作成を行う
       create_project $1 $2
     fi
 
     #チェックインを行う
-    DATE=`date "+%Y-%m-%d %H:%M:%S"`
+    local in_time=`date "+%Y-%m-%d %H:%M:%S"`
     echo "You can describe details of this activity! "
     printf "entry: "
     read memo
     sqlite3 CHECK_TIME "UPDATE projects SET START = 1 WHERE NAME = '$2'"
-    sqlite3 CHECK_TIME "INSERT INTO $2 ('START', 'MEMO') VALUES ('$DATE', '$memo')"
+    sqlite3 CHECK_TIME "INSERT INTO $2 ('START', 'MEMO') VALUES ('$in_time', '$memo')"
 
     echo "Your check-in $2 is successful."
   
@@ -101,10 +101,10 @@ check_in() {
 
 #データベースからINとOUTの時間の差分の秒数を抜き出し、HH:MM:SSの形式で表示する。
 substraction_time() {
-  get_time=`sqlite3 CHECK_TIME "SELECT STRFTIME('%s', END) - STRFTIME('%s', START) FROM $NAME_STATUS WHERE ID = $query_id"`
-  hours=`expr $get_time / 3600`
-  minute=`expr \( $get_time % 3600 \) / 60`
-  second=`expr $get_time % 60`
+  local get_time=`sqlite3 CHECK_TIME "SELECT STRFTIME('%s', END) - STRFTIME('%s', START) FROM $NAME_STATUS WHERE ID = $query_id"`
+  HOURS=`expr $get_time / 3600`
+  MINUTE=`expr \( $get_time % 3600 \) / 60`
+  SECOND=`expr $get_time % 60`
   # echo "Your check-out $NAME_STATUS is successful. This time is $hours:$minute:$second."
   return 0
 }
@@ -112,16 +112,16 @@ substraction_time() {
 #チェックアウトする。
 check_out() {
   check_status
-  check_status_return=$?
+  local check_status_return=$?
   if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、最後はINなのでOUTする
 
     #チェックアウトする
-    DATE=`date "+%Y-%m-%d %H:%M:%S"`
-    query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
-    sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$DATE' WHERE ID = '$query_id'"
+    local out_time=`date "+%Y-%m-%d %H:%M:%S"`
+    local query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
+    sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$out_time' WHERE ID = '$query_id'"
     sqlite3 CHECK_TIME "UPDATE projects SET START = 0 WHERE NAME = '$NAME_STATUS'"
     substraction_time  $NAME_STATUS $query_id
-    echo "Your check-out $NAME_STATUS is successful. This time is $hours:$minute:$second."
+    echo "Your check-out $NAME_STATUS is successful. This time is $HOURS:$MINUTE:$SECOND."
 
   elif [ $check_status_return = 0 ] ; then #実行状態check_status_return=1だった場合、最後はOUTなのでOUTできない
     echo "No projects is running!"
@@ -137,7 +137,7 @@ check_list() {
 
 check_now() {
   check_status
-  check_status_return=$?
+  local check_status_return=$?
   if [ $check_status_return = 0 ] ; then
     echo "NOW no project is runnig!"
   elif [ $check_status_return = 1 ] ; then
@@ -148,35 +148,36 @@ check_now() {
 
 check_alter() {
   check_project $1 $2
-  check_project_return=$?
+  local check_project_return=$?
   if [ $check_project_return = 0 ] ; then #check_project_return=0だった場合、プロジェクトはは存在するのでプロジェクトの変更を行う。
     check_status
-    check_status_return=$?
+    local check_status_return=$?
     if [ $check_status_return = 1 ] ; then
-      echo "check_status_return : $check_status_return"
       if [ $NAME_STATUS = $2 ] ; then
         #チェックアウトする
-        DATE=`date "+%Y-%m-%d %H:%M:%S"`
-        query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
-        sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$DATE' WHERE ID = '$query_id'"
+        local out_time=`date "+%Y-%m-%d %H:%M:%S"`
+        local query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
+        sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$out_time' WHERE ID = '$query_id'"
         sqlite3 CHECK_TIME "UPDATE projects SET START = 0 WHERE NAME = '$NAME_STATUS'"
       fi
     fi
-    # ENDの値が更新されているのでもう1回取得する
-    START_PROJECT=`sqlite3 CHECK_TIME "SELECT START from '$2'  WHERE ID = (SELECT max(ID) FROM '$2')"`
-    END_PROJECT=`sqlite3 CHECK_TIME "SELECT END from '$2'  WHERE ID = (SELECT max(ID) FROM '$2')"`
+    # ENDの値が更新されているので取得する
+    local start_project=`sqlite3 CHECK_TIME "SELECT START from '$2'  WHERE ID = (SELECT max(ID) FROM '$2')"`
+    local end_project=`sqlite3 CHECK_TIME "SELECT END from '$2'  WHERE ID = (SELECT max(ID) FROM '$2')"`
     #レコードの確認を行う
     echo "The latest record : "
     sqlite3 CHECK_TIME "SELECT START, END, MEMO from '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
+    echo "Please write project time from START (HH:MM:SS) : "
+    read input_time
+    local addtime="+$input_time"
     #$3をsqlに渡してENDの候補を表示させる
-    addtime="+$3"
-    CONDIDATE=`sqlite3 CHECK_TIME "SELECT DATETIME(START, '$addtime') AS time FROM '$2' WHERE ID = (SELECT max(ID) FROM '$2')"`
+    local condidate=`sqlite3 CHECK_TIME "SELECT DATETIME(START, '$addtime') AS time FROM '$2' WHERE ID = (SELECT max(ID) FROM '$2')"`
     echo "END_TIME will alter :"
-    echo "$END_PROJECT -> $CONDIDATE"
+    echo "$end_project -> $condidate"
     echo "Do you alter this record?(y/n)."
     read alter_repry
     if [ $alter_repry = 'y' ] ; then
-    sqlite3 CHECK_TIME "UPDATE '$2' SET END = '$CONDIDATE' WHERE ID = (SELECT max(ID) FROM '$2')"
+    sqlite3 CHECK_TIME "UPDATE '$2' SET END = '$condidate' WHERE ID = (SELECT max(ID) FROM '$2')"
     echo "altering $2 is successful."
     sqlite3 CHECK_TIME "SELECT START, END, MEMO from '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
 
@@ -194,7 +195,7 @@ check_alter() {
 
 check_drop() {
   check_project $1 $2
-  check_project_return=$?
+  local check_project_return=$?
   if [ $check_project_return = 0 ] ; then #check_project_return=0だった場合、プロジェクトはは存在するのでプロジェクトの削除を行う。
     sqlite3 CHECK_TIME "DROP TABLE '$2'"
     sqlite3 CHECK_TIME "DELETE FROM projects WHERE NAME = '$2'"
@@ -208,7 +209,7 @@ check_drop() {
 
 check_delete() {
   check_project $1 $2
-  check_project_return=$?
+  local check_project_return=$?
   if [ $check_project_return = 0 ] ; then #check_project_return=0だった場合、プロジェクトはは存在するのでプロジェクトの削除を行う。
     sqlite3 CHECK_TIME "SELECT * from '$2' WHERE ID = (SELECT max(ID) FROM '$2')"
 
@@ -244,20 +245,20 @@ check_restore() {
 
 check_total() {
   check_project $1 $2
-  check_project_return=$?
+  local check_project_return=$?
   if [ $check_project_return = 0 ] ; then 
     check_status $1 $2
-    check_status_return=$?
+    local check_status_return=$?
     if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしているのでチェックアウトするように指示を出す。
       if [ $NAME_STATUS = $2 ] ; then
         echo "$2 is running. Please check-out."
         exit
       fi
     fi
-    total_time=`sqlite3 CHECK_TIME "SELECT sum(STRFTIME('%s', END) - STRFTIME('%s', START)) FROM '$2'"`
-    hours=`expr $total_time / 3600`
-    minute=`expr \( $total_time % 3600 \) / 60`
-    second=`expr $total_time % 60`
+    local total_time=`sqlite3 CHECK_TIME "SELECT sum(STRFTIME('%s', END) - STRFTIME('%s', START)) FROM '$2'"`
+    local hours=`expr $total_time / 3600`
+    local minute=`expr \( $total_time % 3600 \) / 60`
+    local second=`expr $total_time % 60`
     echo "$2 total activity time is $hours:$minute:$second."
   else
     echo "$2 is not exist."
@@ -268,10 +269,10 @@ check_total() {
 
 check_view() {
   check_project $1 $2
-  check_project_return=$?
+  local check_project_return=$?
   if [ $check_project_return = 0 ] ; then 
     check_status $1 $2
-    check_status_return=$?
+    local check_status_return=$?
     if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、プロジェクトにINしているのでチェックアウトするように指示を出す。
       if [ $NAME_STATUS = $2 ] ; then
         echo "$2 is running. Please check-out."
@@ -319,7 +320,7 @@ check_man() {
   echo "      check now : You can see which project is running."
   echo "      check total [project] : You can see total time of a project."
   echo "      check view [project] : You can see total time of each day of a project."
-  echo "      check alter [project] HH:MM:SS : You can alter the latest record END_TIME of a project."
+  echo "      check alter [project] : You can alter the latest record END_TIME of a project."
   echo "      check drop [project] : You can drop a project."
   echo "      check delete [project] : You can delete a latest record from a project."
   echo "      check dump : You can make a dumpfile."
@@ -343,7 +344,7 @@ main() {
   check_database
 
   #$HOME/checkに移動する
-  cd $dirpath
+  cd $DIRPATH
   #実行状態の確認
   if [ $1 = "in" ] ; then
     check_in  $1 $2
@@ -367,7 +368,7 @@ main() {
     check_show $1 $2
 
   elif [ $1 = "alter" ] ; then
-    check_alter $1 $2 $3
+    check_alter $1 $2
 
   elif [ $1 = "drop" ] ; then
     check_drop $1 $2
@@ -389,4 +390,4 @@ main() {
   cd - > /dev/null
 }
 
-main $1 $2 $3
+main $1 $2
