@@ -11,7 +11,8 @@
       check now : 現在check-inしているプロジェクトを確認します。
       check total [project] : 指定したプロジェクトの合計時間を確認します。
       check view [project] : 指定したプロジェクトの日毎の合計時間を確認します。
-      check alter [project] HH:MM:SS : 指定したプロジェクトの最も新しいレコードの終了時刻を変更します。
+      check show [none or project] : 指定したプロジェクト及びすべてのプロジェクトのレコードを確認できます。
+      check alter : 指定したプロジェクトの最も新しいレコードの終了時刻を変更します。
       check delete [project] : 指定したプロジェクトの最も新しいレコードを削除します。
       check drop [project] : 指定したプロジェクトを消去します。
       check dump : データベースの内容をdumpfileに記録します。
