@@ -18,3 +18,16 @@
       check dump : データベースの内容をdumpfileに記録します。
       check restore : dumpfileをデータベースに読み込みます。
       check man : checkの使い方を確認します。
+
+
+    インストールの方法
+        現在functions/init\_check.shは正しい挙動をしていません。
+    - 実行ファイルcheckの有効化
+        PATHが通っている場所にcheckをmv, cpする。シンボリックリンクでは動かないようです。
+    - 補完コマンド_checkの有効化
+     _checkを/usr/local/share/zsh/site-functionsにmv, cpする。
+     terminalで次のコマンドを実行
+        $autoload -U compinit
+        $compinit
+        $sudo chmod -R 755 /usr/local/share/zsh/site-functions
+        $ compdef \_check check
