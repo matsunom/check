@@ -25,7 +25,9 @@ function _check () {
     	local -a cmds
     	cmds=(
         'in:check in [project] : You can start logging time.'
-        'out:You can stop time logging.'
+        'out:check out : You can finish time logging.'
+        'stop:check stop : You can temporarily stop time logging.'
+        'resume:check resume : You can resume time logging.'
         'list:check list : You can see lists of all projects.'
         'now:check now : You can see which project is running.'
       	'total:check total [project] : You can see total time of a project.'

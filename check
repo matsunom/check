@@ -118,7 +118,11 @@ check_out() {
     #チェックアウトする
     local out_time=`date "+%Y-%m-%d %H:%M:%S"`
     local query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
-    sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$out_time' WHERE ID = '$query_id'"
+    if [ -z "$query_id" ] ; then
+      query_id=`sqlite3 CHECK_TIME "SELECT ID FROM '$NAME_STATUS' WHERE ID = (SELECT max(ID) FROM '$NAME_STATUS')"`
+    else
+      sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$out_time' WHERE ID = '$query_id'"
+    fi
     sqlite3 CHECK_TIME "UPDATE projects SET START = 0 WHERE NAME = '$NAME_STATUS'"
     substraction_time  $NAME_STATUS $query_id
     echo "Your check-out $NAME_STATUS is successful. This time is $HOURS:$MINUTE:$SECOND."
@@ -129,6 +133,43 @@ check_out() {
   fi
   return 0
 }
+
+
+check_stop() {
+  check_status
+  local check_status_return=$?
+  if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、最後はINなのでOUTする
+
+    #チェックアウトする
+    local stop_time=`date "+%Y-%m-%d %H:%M:%S"`
+    local query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
+    sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$stop_time' WHERE ID = '$query_id'"
+    echo "$NAME_STATUS is stopping"
+
+  elif [ $check_status_return = 0 ] ; then #実行状態check_status_return=1だった場合、最後はOUTなのでOUTできない
+    echo "No projects is running!"
+    exit
+  fi
+  return 0
+}
+
+check_resume() {
+  check_status
+  local check_status_return=$?
+  if [ $check_status_return = 1 ] ; then
+    local resume_time=`date "+%Y-%m-%d %H:%M:%S"`
+    local memo=`sqlite3 CHECK_TIME "SELECT MEMO FROM '$NAME_STATUS' WHERE ID = (SELECT max(ID) FROM '$NAME_STATUS')"`
+    sqlite3 CHECK_TIME "INSERT INTO $NAME_STATUS ('START', 'MEMO') VALUES ('$resume_time', '$memo')"
+    echo "$NAME_STATUS is resuming."
+  
+  elif [ $check_status_return = 0 ] ; then #実行状態check_status_return=1だった場合、最後はINなのでINできない
+    echo "No projects is running!"
+    exit
+  fi
+
+  return 0
+}
+
 
 check_list() {
   sqlite3 CHECK_TIME "SELECT NAME FROM projects"
@@ -323,11 +364,14 @@ check_man() {
   echo ""
   echo "    check has some functions."
   echo "      check in [project] : You can start logging time."
-  echo "      check out : You can stop time logging."
+  echo "      check out : You can finish time logging."
+  echo "      check stop : You can temporarily stop  time logging."
+  echo "      check resume : You can resume time logging."
   echo "      check list : You can see lists of all projects."
   echo "      check now : You can see which project is running."
   echo "      check total [project] : You can see total time of a project."
   echo "      check view [project] : You can see total time of each day of a project."
+  echo "      check show [none or project] : You can see the list of logs and also choose a project."
   echo "      check alter [project] : You can alter the latest record END_TIME of a project."
   echo "      check drop [project] : You can drop a project."
   echo "      check delete [project] : You can delete a latest record from a project."
@@ -359,6 +403,12 @@ main() {
 
   elif [ $1 = "out" ] ; then
     check_out
+
+  elif [ $1 = "stop" ] ; then
+    check_stop $1 $2
+
+  elif [ $1 = "resume" ] ; then
+    check_resume $1 $2
 
   elif [ $1 = "list" ] ; then
     check_list
