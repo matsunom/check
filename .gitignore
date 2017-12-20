@@ -2,3 +2,4 @@ CHECK_TIME
 .DS_Store
 temp
 check.sh
+CHECK_TIME.dump
