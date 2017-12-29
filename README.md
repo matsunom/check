@@ -23,13 +23,12 @@
 
 
     インストールの方法
-        現在functions/init_check.shは正しい挙動をしていません。
-    - 実行ファイルcheckの有効化
-        PATHが通っている場所にcheckをmv, cpする。シンボリックリンクでは動かないようです。
-    - 補完コマンド_checkの有効化
-     _checkを/usr/local/share/zsh/site-functionsにmv, cpする。
-     terminalで次のコマンドを実行
-        $autoload -U compinit
-        $compinit
-        $sudo chmod -R 755 /usr/local/share/zsh/site-functions
-        $ compdef _check check
+        - checkの有効化
+            PATHの通ってる場所にcheckのシンボリックリンクを貼る。
+            1. $ln -s /Users/matsunom/check/check Users/matsunom/bin/check
+        - _checkの有効化
+            1. $ln -s /Users/matsunom/check/functions/_check /usr/local/share/zsh/site-functions/_check
+            2. .zshrcに以下の内容を書き込む。
+                autoload -U compinit
+                compinit -u
+                compdef _check check
