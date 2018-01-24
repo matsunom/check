@@ -140,13 +140,18 @@ check_stop() {
   local check_status_return=$?
   if [ $check_status_return = 1 ] ; then #実行状態check_status_return=1だった場合、最後はINなのでOUTする
 
-    #チェックアウトする
+    #ストップする
     local stop_time=`date "+%Y-%m-%d %H:%M:%S"`
     local query_id=`sqlite3 CHECK_TIME "SELECT ID FROM $NAME_STATUS WHERE END IS NULL"`
-    sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$stop_time' WHERE ID = '$query_id'"
-    echo "$NAME_STATUS is stopping"
+    if [ ! -z "$query_id" ] ; then
+      sqlite3 CHECK_TIME "UPDATE $NAME_STATUS SET END = '$stop_time' WHERE ID = '$query_id'"
+      echo "$NAME_STATUS is stopping"
+    else
+        echo "$NAME_STATUS is already stopped!"
+        exit
+    fi
 
-  elif [ $check_status_return = 0 ] ; then #実行状態check_status_return=1だった場合、最後はOUTなのでOUTできない
+  elif [ $check_status_return = 0 ] ; then #実行状態check_status_return=0だった場合、最後はOUTなのでOUTできない
     echo "No projects is running!"
     exit
   fi
@@ -157,10 +162,17 @@ check_resume() {
   check_status
   local check_status_return=$?
   if [ $check_status_return = 1 ] ; then
-    local resume_time=`date "+%Y-%m-%d %H:%M:%S"`
-    local memo=`sqlite3 CHECK_TIME "SELECT MEMO FROM '$NAME_STATUS' WHERE ID = (SELECT max(ID) FROM '$NAME_STATUS')"`
-    sqlite3 CHECK_TIME "INSERT INTO $NAME_STATUS ('START', 'MEMO') VALUES ('$resume_time', '$memo')"
-    echo "$NAME_STATUS is resuming."
+    local count_stop=`sqlite3 CHECK_TIME "SELECT COUNT(*) FROM '$NAME_STATUS' WHERE END IS NULL"`
+      if [ $count_stop = 0 ]; then
+        local resume_time=`date "+%Y-%m-%d %H:%M:%S"`
+        local memo=`sqlite3 CHECK_TIME "SELECT MEMO FROM '$NAME_STATUS' WHERE ID = (SELECT max(ID) FROM '$NAME_STATUS')"`
+        sqlite3 CHECK_TIME "INSERT INTO $NAME_STATUS ('START', 'MEMO') VALUES ('$resume_time', '$memo')"
+        echo "$NAME_STATUS is resumed."
+      else
+        echo "$NAME_STATUS is already running!"
+        exit
+      fi
+
   
   elif [ $check_status_return = 0 ] ; then #実行状態check_status_return=1だった場合、最後はINなのでINできない
     echo "No projects is running!"

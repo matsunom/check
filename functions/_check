@@ -1,11 +1,4 @@
-#!/bin/sh
-
-
 #compdef check
-#autoload
-
-
-
 
 function _check () {
 	local dirpath=$HOME"/check"
