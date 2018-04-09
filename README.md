@@ -47,7 +47,7 @@
 		    
 	            filepath=$HOME/Google\ Drive/check/CHECK_TIME
 		    
-        - checkのログをcsvで出力する
+        - checkのログをcsvファイルで出力する
 	
             1. コマンドラインでsqlite3を起動する。
 	    
