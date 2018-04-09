@@ -21,8 +21,7 @@
       check restore : dumpfileをデータベースに読み込みます。
       check man : checkの使い方を確認します。
 
-
-    インストールの方法
+　　インストールの方法
         - checkの有効化
             PATHの通ってる場所にcheckのシンボリックリンクを貼る。
             $ln -s $HOME/check/check ＄HOME/bin/check
@@ -30,14 +29,14 @@
             1. 複数のMacでcheckを有効化する。
             2. Google Driveなどのクラウドサービスのフォルダ内にcheckフォルダをつくる。
                 checkコマンドのdirpathとfilepathを以下のように変更する。
-                  		dirpath=$HOME/check
-		                  filepath=$HOME/check/CHECK_TIME
-		                  	↓
-	                  	dirpath=$HOME/Google\ Drive/check
-	                  	filepath=$HOME/Google\ Drive/check/CHECK_TIME
+                  　dirpath=$HOME/check
+		    filepath=$HOME/check/CHECK_TIME
+		    	↓
+	            dirpath=$HOME/Google\ Drive/check
+	            filepath=$HOME/Google\ Drive/check/CHECK_TIME
         - checkのログをcsvで出力する
             1. コマンドラインでsqlite3を起動する。
             2. 以下のコマンドを実行する。（この際SELECT文は複数実行しないこと）
             		> .mode csv
-		            > .outout ファイル名
+		        > .outout ファイル名
 	            	> SELECT START, END, MEMO FROM テーブル名;
